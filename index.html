@@ -1,566 +1,121 @@
- <!DOCTYPE html>
+<script src="https://cdn.tailwindcss.com"></script>
 
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SI-BMN Denah Interaktif Berbasis Gambar Blueprint</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .room-hotspot {
-            position: absolute;
-            border: 2px dashed rgba(239, 68, 68, 0.8);
-            background-color: rgba(239, 68, 68, 0.15);
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .room-hotspot:hover {
-            background-color: rgba(99, 102, 241, 0.35);
-            border-color: rgba(99, 102, 241, 1);
-            transform: scale(1.02);
-            z-index: 20;
-        }
-        .room-hotspot.active {
-            background-color: rgba(99, 102, 241, 0.45);
-            border: 3px solid #4f46e5;
-            z-index: 30;
-        }
-        .pin-marker {
-            transition: all 0.2s ease-in-out;
-            animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes bounceIn {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
-        }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<div id="app-dashboard" class="max-w-6xl mx-auto p-4 font-sans">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">Dashboard Informasi Inventaris</h2>
+  
+  <!-- Loading State -->
+  <div id="loading-state" class="flex items-center justify-center py-12">
+    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+    <span class="ml-3 text-gray-600 font-medium">Memuat data inventaris dan foto...</span>
+  </div>
 
-    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-700 p-2.5 rounded-xl shadow-inner">
-                    <i class="fa-solid fa-map-location-dot text-2xl text-amber-400"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-wide">SI-BMN Denah Gambar Interaktif</h1>
-                    <p class="text-xs text-indigo-200">Klik Ruangan pada Gambar Denah untuk Kelola Inventaris</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
-                <div id="connection-status" class="flex items-center space-x-2 bg-indigo-800 px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" id="status-dot"></span>
-                    <span id="status-text">Mode Lokal / Siap</span>
-                </div>
-                <button onclick="openConfigModal()" class="bg-indigo-800 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-700 transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>URL GAS</span>
-                </button>
-            </div>
-        </div>
-    </header>
+  <!-- Dashboard Content (Hidden by default) -->
+  <div id="dashboard-content" class="hidden">
+    <!-- Ringkasan Statistik -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm">
+        <p class="text-sm text-blue-600 font-semibold">Total Baris Data</p>
+        <p id="stat-rows" class="text-2xl font-bold text-blue-900">0</p>
+      </div>
+      <div class="bg-green-50 border border-green-200 p-4 rounded-lg shadow-sm">
+        <p class="text-sm text-green-600 font-semibold">Total Jumlah Barang (JML)</p>
+        <p id="stat-total" class="text-2xl font-bold text-green-900">0</p>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
+        <p class="text-sm text-emerald-600 font-semibold">Kondisi Baik</p>
+        <p id="stat-good" class="text-2xl font-bold text-emerald-900">0</p>
+      </div>
+    </div>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Tabel Data dengan Kolom Foto -->
+    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+      <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+        <thead class="bg-gray-50 text-gray-700 uppercase font-semibold text-xs">
+          <tr>
+            <th class="px-4 py-3">Foto</th>
+            <th class="px-4 py-3">Ruangan</th>
+            <th class="px-4 py-3">Kode Barang</th>
+            <th class="px-4 py-3">Nama Barang</th>
+            <th class="px-4 py-3">Merk / Type</th>
+            <th class="px-4 py-3">Jml</th>
+            <th class="px-4 py-3">Tahun</th>
+            <th class="px-4 py-3">Pengguna</th>
+            <th class="px-4 py-3">Kondisi</th>
+          </tr>
+        </thead>
+        <tbody id="table-body" class="divide-y divide-gray-200 text-gray-600">
+          <!-- Data dinamis dimasukkan di sini -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Ganti URL di bawah dengan URL Web App Google Apps Script Anda
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwv8Yx09NrRsINZoAlPAna6h1x7yv0hRbnn_e41_sDFCcPk46p0-VmF6ZhGrOFkLWVv/exec";
+
+  async function fetchInventoryData() {
+    try {
+      const response = await fetch(WEB_APP_URL);
+      const result = await response.json();
+      
+      if(result.status === "success") {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('dashboard-content').classList.remove('hidden');
         
-        <!-- Left & Middle: Custom Blueprint Image with Hotspots -->
-        <section class="lg:col-span-2 flex flex-col gap-6">
-            
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-800 flex items-center space-x-2">
-                            <i class="fa-solid fa-image text-indigo-600"></i>
-                            <span>Denah Master Gedung (Klik Ruangan R-13 s.d R-33)</span>
-                        </h2>
-                        <p class="text-xs text-slate-500">Peta area interaktif di atas gambar denah asli Anda</p>
-                    </div>
-                    <button onclick="openAddItemModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Tambah BMN Baru</span>
-                    </button>
-                </div>
+        document.getElementById('stat-rows').innerText = result.summary.totalRows;
+        document.getElementById('stat-total').innerText = result.summary.totalItems;
+        document.getElementById('stat-good').innerText = result.summary.goodCondition;
+        
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = "";
+        
+        result.data.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-gray-50 align-middle";
+          
+          // Tangani kolom Foto (bisa berupa teks hyperlink atau URL langsung)
+          let fotoContent = '-';
+          const rawFoto = item['FOTO'] || '';
+          
+          if (rawFoto) {
+            // Jika isi kolom berupa teks formula HYPERLINK atau URL langsung
+            // Kita buat elemen gambar / link yang rapi di sebelah kiri baris
+            fotoContent = `
+              <div class="flex items-center space-x-2">
+                <a href="${rawFoto}" target="_blank" class="block w-12 h-12 rounded overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0 hover:opacity-80 transition">
+                  <img src="${rawFoto}" alt="Foto Barang" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=No+Img'">
+                </a>
+              </div>
+            `;
+          }
 
-                <!-- Image Container with Hotspots Overlay -->
-                <div id="blueprint-wrapper" class="relative w-full bg-slate-900 rounded-xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center">
-                    
-                    <!-- Base Blueprint Image -->
-                    <img id="blueprint-img" src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80" alt="Denah Gedung" class="w-full h-auto object-contain select-none opacity-90">
-                    
-                    <!-- Dynamic Hotspots Container matching R-13 to R-33 -->
-                    <div id="hotspots-layer" class="absolute inset-0">
-                        <!-- Injected via JavaScript -->
-                    </div>
-
-                </div>
-                <div class="mt-2 text-center">
-                    <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-info mr-1"></i> Area merah putus-putus pada gambar mendeteksi area klik ruangan secara otomatis.</span>
-                </div>
-            </div>
-
-            <!-- Detailed Room Zoom View & Item Pins -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                <div class="flex justify-between items-center mb-3">
-                    <div>
-                        <h3 id="active-room-name" class="font-bold text-slate-800 text-base">Pilih Ruangan di Denah Atas</h3>
-                        <p id="active-room-desc" class="text-xs text-slate-500">Klik titik mana saja di dalam denah ruangan bawah untuk menaruh posisi aset BMN</p>
-                    </div>
-                    <span id="active-room-badge" class="bg-slate-100 text-slate-600 text-xs font-semibold px-3 py-1 rounded-full">Belum Dipilih</span>
-                </div>
-
-                <!-- Sub-room detailed canvas for pinning items -->
-                <div id="room-canvas-container" class="relative w-full h-[240px] bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center cursor-crosshair">
-                    <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#4f46e5 1px, transparent 1px); background-size: 15px 15px;"></div>
-                    
-                    <div id="canvas-placeholder" class="text-center p-4 z-10">
-                        <i class="fa-solid fa-hand-pointer text-3xl text-slate-400 mb-1"></i>
-                        <p class="text-xs font-medium text-slate-600">Klik salah satu kotak ruangan di peta denah atas terlebih dahulu.</p>
-                    </div>
-
-                    <!-- Room Map Area Pins Container -->
-                    <div id="room-pins-area" class="absolute inset-4 hidden bg-white/90 backdrop-blur-sm rounded-lg border border-slate-200 shadow-inner relative overflow-hidden">
-                        <!-- Pins injected dynamically -->
-                    </div>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- Right Column: Asset Inventory List & Details -->
-        <section class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full max-h-[720px]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
-                    <i class="fa-solid fa-boxes-stacked text-indigo-600"></i>
-                    <span>Inventaris Ruangan Terpilih</span>
-                </h3>
-                <span id="badge-item-count" class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-full">0 Item</span>
-            </div>
-
-            <!-- Search Filter -->
-            <div class="relative mb-3">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                    <i class="fa-solid fa-search text-xs"></i>
-                </span>
-                <input type="text" id="search-input" oninput="renderAssetList()" placeholder="Cari nama barang atau nomor inventaris..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-
-            <!-- Item List Container -->
-            <div id="asset-list-container" class="flex-grow overflow-y-auto space-y-3 pr-1">
-                <div class="text-center py-12 text-slate-400">
-                    <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                    <p class="text-xs">Belum ada ruangan yang dipilih.</p>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <div id="config-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-800 text-base">Konfigurasi Google Apps Script API</h3>
-                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <p class="text-xs text-slate-500 mb-4">Masukkan Web App URL Google Apps Script Anda untuk sinkronisasi database Google Sheets.</p>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1">Web App URL</label>
-                    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/AKfycbyFbYWMWmmDfcUCXy3AqjX5udQTl-KlI2K8rqXm4t81HROdRhRicOqgIc91pn1MCop9/exec" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button onclick="closeConfigModal()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
-                    <button onclick="saveGasUrl()" class="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm">Simpan & Hubungkan</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Add/Edit Item BMN -->
-    <div id="item-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-100 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="item-modal-title" class="font-bold text-slate-800 text-base">Tambah Barang Milik Negara (BMN)</h3>
-                <button onclick="closeAddItemModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="item-form" onsubmit="handleFormSubmit(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="form-id">
-                <input type="hidden" id="form-coord-x" value="50">
-                <input type="hidden" id="form-coord-y" value="50">
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Nomor / Kode Inventaris *</label>
-                        <input type="text" id="form-kode" required placeholder="Cth: 02.12.01.001" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Nama Barang *</label>
-                        <input type="text" id="form-nama" required placeholder="Cth: Meja Kerja Kayu" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Ruangan Penempatan *</label>
-                        <select id="form-ruangan" required class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Kondisi Barang *</label>
-                        <select id="form-kondisi" required class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                            <option value="Baik">Baik</option>
-                            <option value="Rusak Ringan">Rusak Ringan</option>
-                            <option value="Rusak Berat">Rusak Berat</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Penanggung Jawab</label>
-                        <input type="text" id="form-penanggung" placeholder="Cth: Budi Santoso" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Tahun Perolehan</label>
-                        <input type="number" id="form-tahun" placeholder="2023" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">Keterangan Tambahan / Spesifikasi</label>
-                    <textarea id="form-keterangan" rows="2" placeholder="Merk, ukuran, atau warna" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-                </div>
-
-                <div class="flex justify-end space-x-2 pt-3">
-                    <button type="button" onclick="closeAddItemModal()" class="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
-                    <button type="submit" class="px-5 py-2 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm flex items-center space-x-1.5">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        <span>Simpan Data BMN</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center space-x-2 text-xs">
-        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-msg">Berhasil</span>
-    </div>
-
-    <script>
-        // Data ruangan berdasarkan denah gambar Anda (R-13 sampai R-33)
-        const ROOMS_DATA = {
-            "R-13": { name: "Ruang Rapat Utama", desc: "Area Atas (Kanan)", top: "15%", left: "53%", width: "18%", height: "22%" },
-            "R-14": { name: "Ruang Kerja Staf / Operasional", desc: "Area Tengah", top: "37%", left: "45%", width: "22%", height: "25%" },
-            "R-15": { name: "Ruang Kepala / Pimpinan", desc: "Area Atas (Kiri)", top: "15%", left: "27%", width: "26%", height: "22%" },
-            "R-16": { name: "Ruang Arsip Dokumen A", desc: "Area Koridor Tengah", top: "37%", left: "37%", width: "8%", height: "18%" },
-            "R-17": { name: "Ruang Arsip Dokumen B", desc: "Area Koridor Tengah", top: "37%", left: "28%", width: "9%", height: "18%" },
-            "R-18": { name: "Ruang Pelayanan / Resepsionis", desc: "Area Samping Bawah", top: "55%", left: "25%", width: "12%", height: "22%" },
-            "R-19": { name: "Ruang Gudang Kecil", desc: "Area Samping", top: "55%", left: "37%", width: "6%", height: "15%" },
-            "R-20": { name: "Ruang Panel / Utilitas", desc: "Area Samping", top: "55%", left: "43%", width: "6%", height: "15%" },
-            "R-21": { name: "Ruang Administrasi & Keuangan", desc: "Area Bawah Tengah", top: "62%", left: "49%", width: "17%", height: "20%" },
-            "R-22": { name: "Ruang Server & IT", desc: "Area Tengah Gedung", top: "42%", left: "49%", width: "17%", height: "20%" },
-            "R-23": { name: "Ruang Sub Bagian 1", desc: "Area Kanan", top: "42%", left: "66%", width: "10%", height: "18%" },
-            "R-24": { name: "Ruang Sub Bagian 2", desc: "Area Kanan", top: "42%", left: "76%", width: "10%", height: "18%" },
-            "R-25": { name: "Ruang Sub Bagian 3", desc: "Area Kanan Bawah", top: "60%", left: "66%", width: "10%", height: "22%" },
-            "R-26": { name: "Ruang Sub Bagian 4", desc: "Area Kanan Bawah", top: "60%", left: "76%", width: "10%", height: "22%" },
-            "R-27": { name: "Aula / Ruang Serbaguna Besar", desc: "Area Sayap Kanan", top: "42%", left: "86%", width: "14%", height: "45%" },
-            "R-28": { name: "Ruang Tunggu VIP", desc: "Area Atas Kanan", top: "28%", left: "66%", width: "20%", height: "14%" },
-            "R-29": { name: "Ruang Cabang 1", desc: "Area Sayap Kiri Atas", top: "18%", left: "10%", width: "10%", height: "20%" },
-            "R-30": { name: "Ruang Cabang 2", desc: "Area Sayap Kiri Tengah", top: "38%", left: "10%", width: "10%", height: "18%" },
-            "R-31": { name: "Ruang Cabang 3", desc: "Area Sayap Kiri Bawah", top: "56%", left: "5%", width: "15%", height: "22%" },
-            "R-32": { name: "Gudang Logistik Utama", desc: "Area Pojok Kiri Bawah", top: "78%", left: "5%", width: "15%", height: "18%" },
-            "R-33": { name: "Ruang Pos / Keamanan", desc: "Area Penghubung", top: "56%", left: "20%", width: "5%", height: "15%" }
-        };
-
-        let state = {
-            gasUrl: localStorage.getItem('bmn_gas_url') || '',
-            items: [],
-            currentRoom: 'R-13'
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            renderHotspots();
-            populateDropdowns();
-
-            if (state.gasUrl) {
-                document.getElementById('gas-url-input').value = state.gasUrl;
-                fetchInventoryData();
-            } else {
-                loadSampleData();
-            }
-
-            // Click handler for sub-room canvas to add item coordinate
-            const pinsArea = document.getElementById('room-pins-area');
-            pinsArea.addEventListener('click', (e) => {
-                const rect = pinsArea.getBoundingClientRect();
-                const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-                const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-                
-                openAddItemModalWithCoords(x.toFixed(1), y.toFixed(1));
-            });
+          tr.innerHTML = `
+            <td class="px-4 py-3">${fotoContent}</td>
+            <td class="px-4 py-3 font-medium text-gray-800">${item['KODE RUANGAN'] || ''}</td>
+            <td class="px-4 py-3">${item['KODE BARANG'] || ''}</td>
+            <td class="px-4 py-3 font-medium text-gray-900">${item['NAMA BARANG/ JENIS BARANG'] || item['NAMA BARANG/JENIS BARANG'] || ''}</td>
+            <td class="px-4 py-3">${item['MERK/ TYPE'] || '-'}</td>
+            <td class="px-4 py-3">${item['JML'] || 0}</td>
+            <td class="px-4 py-3">${item['TAHUN'] || ''}</td>
+            <td class="px-4 py-3">${item['PENGGUNA'] || '-'}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                ${item['KONDISI'] || 'Baik'}
+              </span>
+            </td>
+          `;
+          tbody.appendChild(tr);
         });
+      } else {
+        alert("Gagal memuat data: " + result.message);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      document.getElementById('loading-state').innerHTML = `<p class="text-red-500">Gagal terhubung ke server database.</p>`;
+    }
+  }
 
-        function renderHotspots() {
-            const layer = document.getElementById('hotspots-layer');
-            layer.innerHTML = Object.keys(ROOMS_DATA).map(id => {
-                const r = ROOMS_DATA[id];
-                const count = state.items.filter(i => i.ruangan === id).length;
-                const isActive = state.currentRoom === id ? 'active' : '';
-                return `
-                    <div onclick="selectRoom('${id}')" id="hotspot-${id}" class="room-hotspot rounded-md ${isActive}" style="top: ${r.top}; left: ${r.left}; width: ${r.width}; height: ${r.height};" title="${id} - ${r.name}">
-                        <div class="bg-slate-900/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow flex items-center space-x-1">
-                            <span>${id}</span>
-                            ${count > 0 ? `<span class="bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]">${count}</span>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function populateDropdowns() {
-            const select = document.getElementById('form-ruangan');
-            select.innerHTML = Object.keys(ROOMS_DATA).map(id => `
-                <option value="${id}">${ROOMS_DATA[id].name} (${id})</option>
-            `).join('');
-        }
-
-        function loadSampleData() {
-            state.items = [
-                { id: "BMN-101", kode: "02.12.13.01", nama: "Meja Konferensi Besar", ruangan: "R-13", kondisi: "Baik", penanggung: "Sekretariat", tahun: "2022", coordX: 50, coordY: 50 },
-                { id: "BMN-102", kode: "02.12.13.02", nama: "Proyektor Ceiling Epson", ruangan: "R-13", kondisi: "Baik", penanggung: "Tim IT", tahun: "2023", coordX: 50, coordY: 20 },
-                { id: "BMN-103", kode: "02.12.15.01", nama: "Meja Pimpinan Eksekutif", ruangan: "R-15", kondisi: "Baik", penanggung: "Kepala Kantor", tahun: "2021", coordX: 40, coordY: 50 },
-                { id: "BMN-104", kode: "02.12.27.01", nama: "Sound System Portable", ruangan: "R-27", kondisi: "Baik", penanggung: "Bagian Umum", tahun: "2023", coordX: 50, coordY: 50 }
-            ];
-            selectRoom('R-13');
-            renderHotspots();
-        }
-
-        function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); }
-        function closeConfigModal() { document.getElementById('config-modal').classList.add('hidden'); }
-        function saveGasUrl() {
-            const url = document.getElementById('gas-url-input').value.trim();
-            if (!url) return showToast("URL tidak boleh kosong", "error");
-            state.gasUrl = url;
-            localStorage.setItem('bmn_gas_url', url);
-            closeConfigModal();
-            fetchInventoryData();
-        }
-
-        async function fetchInventoryData() {
-            if (!state.gasUrl) return;
-            document.getElementById('status-text').innerText = "Menarik Data...";
-            try {
-                const res = await fetch(state.gasUrl + '?action=getItems');
-                const json = await res.json();
-                if (json.status === 'success') {
-                    state.items = json.data || [];
-                    document.getElementById('status-text').innerText = "Terhubung ke GAS";
-                    document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
-                    selectRoom(state.currentRoom);
-                    renderHotspots();
-                }
-            } catch (err) {
-                document.getElementById('status-text').innerText = "Koneksi Gagal (Lokal)";
-                document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-            }
-        }
-
-        function selectRoom(roomId) {
-            state.currentRoom = roomId;
-            const rInfo = ROOMS_DATA[roomId];
-
-            // Update active hotspot styling
-            document.querySelectorAll('.room-hotspot').forEach(el => el.classList.remove('active'));
-            const activeEl = document.getElementById(`hotspot-${roomId}`);
-            if (activeEl) activeEl.classList.add('active');
-
-            // Update Header Room Info
-            document.getElementById('active-room-name').innerText = `${roomId} - ${rInfo.name}`;
-            document.getElementById('active-room-desc').innerText = `${rInfo.desc} — Klik area kanvas bawah untuk tambah/geser posisi BMN`;
-            document.getElementById('active-room-badge').innerText = roomId;
-
-            // Show room interactive canvas
-            document.getElementById('canvas-placeholder').classList.add('hidden');
-            document.getElementById('room-pins-area').classList.remove('hidden');
-
-            renderRoomPins();
-            renderAssetList();
-        }
-
-        function renderRoomPins() {
-            const area = document.getElementById('room-pins-area');
-            const roomItems = state.items.filter(i => i.ruangan === state.currentRoom);
-            
-            area.querySelectorAll('.pin-marker').forEach(p => p.remove());
-
-            roomItems.forEach(item => {
-                const x = item.coordX || 50;
-                const y = item.coordY || 50;
-                const color = item.kondisi === 'Baik' ? 'bg-emerald-500 text-white' : item.kondisi === 'Rusak Ringan' ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white';
-
-                const pin = document.createElement('div');
-                pin.className = `pin-marker absolute -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full ${color} flex items-center justify-center shadow-lg cursor-pointer border-2 border-white text-xs font-bold`;
-                pin.style.left = `${x}%`;
-                pin.style.top = `${y}%`;
-                pin.innerHTML = `<i class="fa-solid fa-box text-[10px]"></i>`;
-                pin.title = `${item.nama} (${item.kode})`;
-                pin.onclick = (e) => {
-                    e.stopPropagation();
-                    highlightAsset(item.id);
-                };
-                area.appendChild(pin);
-            });
-            renderHotspots();
-        }
-
-        function renderAssetList() {
-            const container = document.getElementById('asset-list-container');
-            const keyword = document.getElementById('search-input').value.toLowerCase();
-            const roomItems = state.items.filter(i => i.ruangan === state.currentRoom && (i.nama.toLowerCase().includes(keyword) || i.kode.toLowerCase().includes(keyword)));
-
-            document.getElementById('badge-item-count').innerText = `${roomItems.length} Item`;
-
-            if (roomItems.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400"><i class="fa-solid fa-box-open text-3xl mb-2"></i><p class="text-xs">Tidak ada BMN di ruangan ini.</p></div>`;
-                return;
-            }
-
-            container.innerHTML = roomItems.map(item => {
-                const badge = item.kondisi === 'Baik' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : item.kondisi === 'Rusak Ringan' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200';
-                return `
-                    <div id="card-${item.id}" class="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 transition shadow-xs flex flex-col gap-2">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">${item.kode}</span>
-                                <h4 class="font-bold text-slate-800 text-xs mt-1">${item.nama}</h4>
-                            </div>
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badge}">${item.kondisi}</span>
-                        </div>
-                        <div class="text-[11px] text-slate-500 grid grid-cols-2 gap-1 pt-1 border-t border-slate-100">
-                            <div><span class="text-slate-400">Pengguna:</span> ${item.penanggung || '-'}</div>
-                            <div><span class="text-slate-400">Tahun:</span> ${item.tahun || '-'}</div>
-                        </div>
-                        <div class="flex justify-end space-x-2 pt-1">
-                            <button onclick="editAsset('${item.id}')" class="text-indigo-600 hover:text-indigo-800 text-[11px] font-semibold px-2 py-1 rounded bg-indigo-50"><i class="fa-solid fa-pen"></i> Edit</button>
-                            <button onclick="deleteAsset('${item.id}')" class="text-rose-600 hover:text-rose-800 text-[11px] font-semibold px-2 py-1 rounded bg-rose-50"><i class="fa-solid fa-trash"></i> Hapus</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function highlightAsset(id) {
-            const card = document.getElementById(`card-${id}`);
-            if (card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                card.classList.add('ring-2', 'ring-indigo-500', 'bg-indigo-50/50');
-                setTimeout(() => card.classList.remove('ring-2', 'ring-indigo-500', 'bg-indigo-50/50'), 2000);
-            }
-        }
-
-        function openAddItemModal() {
-            document.getElementById('item-modal-title').innerText = "Tambah Barang Milik Negara (BMN)";
-            document.getElementById('item-form').reset();
-            document.getElementById('form-id').value = '';
-            document.getElementById('form-ruangan').value = state.currentRoom;
-            document.getElementById('form-coord-x').value = '50';
-            document.getElementById('form-coord-y').value = '50';
-            document.getElementById('item-modal').classList.remove('hidden');
-        }
-
-        function openAddItemModalWithCoords(x, y) {
-            openAddItemModal();
-            document.getElementById('form-coord-x').value = x;
-            document.getElementById('form-coord-y').value = y;
-            showToast(`Titik peta ruangan dipilih (${x}%, ${y}%)`, "success");
-        }
-
-        function closeAddItemModal() { document.getElementById('item-modal').classList.add('hidden'); }
-
-        function editAsset(id) {
-            const item = state.items.find(i => i.id === id);
-            if (!item) return;
-            document.getElementById('item-modal-title').innerText = "Edit Data BMN";
-            document.getElementById('form-id').value = item.id;
-            document.getElementById('form-kode').value = item.kode;
-            document.getElementById('form-nama').value = item.nama;
-            document.getElementById('form-ruangan').value = item.ruangan;
-            document.getElementById('form-kondisi').value = item.kondisi;
-            document.getElementById('form-penanggung').value = item.penanggung || '';
-            document.getElementById('form-tahun').value = item.tahun || '';
-            document.getElementById('form-keterangan').value = item.keterangan || '';
-            document.getElementById('form-coord-x').value = item.coordX || 50;
-            document.getElementById('form-coord-y').value = item.coordY || 50;
-            document.getElementById('item-modal').classList.remove('hidden');
-        }
-
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            const id = document.getElementById('form-id').value || 'BMN-' + Date.now().toString().slice(-6);
-            const newItem = {
-                id: id,
-                kode: document.getElementById('form-kode').value,
-                nama: document.getElementById('form-nama').value,
-                ruangan: document.getElementById('form-ruangan').value,
-                kondisi: document.getElementById('form-kondisi').value,
-                penanggung: document.getElementById('form-penanggung').value,
-                tahun: document.getElementById('form-tahun').value,
-                keterangan: document.getElementById('form-keterangan').value,
-                coordX: parseFloat(document.getElementById('form-coord-x').value),
-                coordY: parseFloat(document.getElementById('form-coord-y').value)
-            };
-
-            const idx = state.items.findIndex(i => i.id === id);
-            if (idx >= 0) state.items[idx] = newItem;
-            else state.items.push(newItem);
-
-            closeAddItemModal();
-            selectRoom(newItem.ruangan);
-            showToast("Data BMN berhasil disimpan", "success");
-
-            if (state.gasUrl) {
-                try {
-                    await fetch(state.gasUrl, {
-                        method: 'POST', mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'saveItem', data: newItem })
-                    });
-                } catch(err) { console.error(err); }
-            }
-        }
-
-        async function deleteAsset(id) {
-            if (!confirm("Hapus data inventaris ini?")) return;
-            state.items = state.items.filter(i => i.id !== id);
-            selectRoom(state.currentRoom);
-            showToast("Data berhasil dihapus", "success");
-
-            if (state.gasUrl) {
-                try {
-                    await fetch(state.gasUrl, {
-                        method: '1', mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'deleteItem', id: id })
-                    });
-                } catch(err) { console.error(err); }
-            }
-        }
-
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
-            document.getElementById('toast-icon').className = type === 'success' ? "fa-solid fa-circle-check text-emerald-400" : "fa-solid fa-triangle-exclamation text-rose-400";
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-        }
-    </script>
-</body>
-</html>
+  fetchInventoryData();
+</script>
