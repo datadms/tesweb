@@ -1,121 +1,686 @@
-<script src="https://cdn.tailwindcss.com"></script>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal DMS Engine V2</title>
 
-<div id="app-dashboard" class="max-w-6xl mx-auto p-4 font-sans">
-  <h2 class="text-2xl font-bold text-gray-800 mb-4">Dashboard Informasi Inventaris</h2>
-  
-  <!-- Loading State -->
-  <div id="loading-state" class="flex items-center justify-center py-12">
-    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-    <span class="ml-3 text-gray-600 font-medium">Memuat data inventaris dan foto...</span>
-  </div>
+  <!-- CDN Assets -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Dashboard Content (Hidden by default) -->
-  <div id="dashboard-content" class="hidden">
-    <!-- Ringkasan Statistik -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm">
-        <p class="text-sm text-blue-600 font-semibold">Total Baris Data</p>
-        <p id="stat-rows" class="text-2xl font-bold text-blue-900">0</p>
-      </div>
-      <div class="bg-green-50 border border-green-200 p-4 rounded-lg shadow-sm">
-        <p class="text-sm text-green-600 font-semibold">Total Jumlah Barang (JML)</p>
-        <p id="stat-total" class="text-2xl font-bold text-green-900">0</p>
-      </div>
-      <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg shadow-sm">
-        <p class="text-sm text-emerald-600 font-semibold">Kondisi Baik</p>
-        <p id="stat-good" class="text-2xl font-bold text-emerald-900">0</p>
-      </div>
-    </div>
-
-    <!-- Tabel Data dengan Kolom Foto -->
-    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
-      <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
-        <thead class="bg-gray-50 text-gray-700 uppercase font-semibold text-xs">
-          <tr>
-            <th class="px-4 py-3">Foto</th>
-            <th class="px-4 py-3">Ruangan</th>
-            <th class="px-4 py-3">Kode Barang</th>
-            <th class="px-4 py-3">Nama Barang</th>
-            <th class="px-4 py-3">Merk / Type</th>
-            <th class="px-4 py-3">Jml</th>
-            <th class="px-4 py-3">Tahun</th>
-            <th class="px-4 py-3">Pengguna</th>
-            <th class="px-4 py-3">Kondisi</th>
-          </tr>
-        </thead>
-        <tbody id="table-body" class="divide-y divide-gray-200 text-gray-600">
-          <!-- Data dinamis dimasukkan di sini -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<script>
-  // Ganti URL di bawah dengan URL Web App Google Apps Script Anda
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwv8Yx09NrRsINZoAlPAna6h1x7yv0hRbnn_e41_sDFCcPk46p0-VmF6ZhGrOFkLWVv/exec";
-
-  async function fetchInventoryData() {
-    try {
-      const response = await fetch(WEB_APP_URL);
-      const result = await response.json();
-      
-      if(result.status === "success") {
-        document.getElementById('loading-state').style.display = 'none';
-        document.getElementById('dashboard-content').classList.remove('hidden');
-        
-        document.getElementById('stat-rows').innerText = result.summary.totalRows;
-        document.getElementById('stat-total').innerText = result.summary.totalItems;
-        document.getElementById('stat-good').innerText = result.summary.goodCondition;
-        
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = "";
-        
-        result.data.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.className = "hover:bg-gray-50 align-middle";
-          
-          // Tangani kolom Foto (bisa berupa teks hyperlink atau URL langsung)
-          let fotoContent = '-';
-          const rawFoto = item['FOTO'] || '';
-          
-          if (rawFoto) {
-            // Jika isi kolom berupa teks formula HYPERLINK atau URL langsung
-            // Kita buat elemen gambar / link yang rapi di sebelah kiri baris
-            fotoContent = `
-              <div class="flex items-center space-x-2">
-                <a href="${rawFoto}" target="_blank" class="block w-12 h-12 rounded overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0 hover:opacity-80 transition">
-                  <img src="${rawFoto}" alt="Foto Barang" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=No+Img'">
-                </a>
-              </div>
-            `;
-          }
-
-          tr.innerHTML = `
-            <td class="px-4 py-3">${fotoContent}</td>
-            <td class="px-4 py-3 font-medium text-gray-800">${item['KODE RUANGAN'] || ''}</td>
-            <td class="px-4 py-3">${item['KODE BARANG'] || ''}</td>
-            <td class="px-4 py-3 font-medium text-gray-900">${item['NAMA BARANG/ JENIS BARANG'] || item['NAMA BARANG/JENIS BARANG'] || ''}</td>
-            <td class="px-4 py-3">${item['MERK/ TYPE'] || '-'}</td>
-            <td class="px-4 py-3">${item['JML'] || 0}</td>
-            <td class="px-4 py-3">${item['TAHUN'] || ''}</td>
-            <td class="px-4 py-3">${item['PENGGUNA'] || '-'}</td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                ${item['KONDISI'] || 'Baik'}
-              </span>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } else {
-        alert("Gagal memuat data: " + result.message);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      document.getElementById('loading-state').innerHTML = `<p class="text-red-500">Gagal terhubung ke server database.</p>`;
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } }
     }
-  }
+  </script>
 
-  fetchInventoryData();
-</script>
+  <style>
+    .post-body, .entry-content, article { max-width: 100% !important; padding: 0 !important; margin: 0 !important; background: transparent !important; }
+    #portal-root-wrapper {
+      position: fixed !important; top: 0 !important; left: 0 !important;
+      width: 100vw !important; height: 100vh !important; background-color: #0b0f19 !important;
+      z-index: 999999 !important; overflow-y: auto !important; padding: 20px !important;
+    }
+    
+    .fast-spinner {
+      width: 24px; height: 24px; border: 3px solid rgba(16, 185, 129, 0.2);
+      border-top-color: #10b981; border-radius: 50%; animation: spin 0.5s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans antialiased">
+
+  <div id="portal-root-wrapper" class="flex flex-col justify-between">
+    <!-- Global Spinner Overlay -->
+    <div id="globalSpinnerOverlay" class="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] z-[999] hidden flex items-center justify-center">
+      <div class="bg-[#111827] border border-[#1f2937] px-5 py-3.5 rounded-2xl shadow-2xl flex items-center space-x-3">
+        <div class="fast-spinner"></div>
+        <span id="globalSpinnerMessage" class="text-xs font-semibold text-slate-200">Memproses...</span>
+      </div>
+    </div>
+
+    <div>
+      <header class="w-full bg-[#111827] border border-[#1f2937] rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 mb-6 shadow-xl">
+        <div class="flex items-center space-x-3 cursor-pointer w-full md:w-auto justify-between md:justify-start" onclick="loadPage('ROOT')">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-extrabold shadow-lg">
+              <i class="fas fa-layer-group"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-sm font-extrabold text-white">Portal DMS Engine</h1>
+                <span id="roleBadge" class="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">ROLE: UMUM</span>
+              </div>
+              <p id="userOwnerInfo" class="text-[11px] text-slate-400">@public_access</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 w-full md:w-auto justify-end flex-wrap gap-y-2">
+          <div id="dynamicNavbarMenus" class="flex items-center space-x-2"></div>
+          <button onclick="syncDataManual()" class="whitespace-nowrap px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-[#1f2937] rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5">
+            <i class="fas fa-rotate text-[11px] text-emerald-400"></i><span>Update Data</span>
+          </button>
+          <button id="manageUserBtn" onclick="openUserManagementModal()" class="hidden whitespace-nowrap px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5">
+            <i class="fas fa-users-gear text-[10px]"></i><span>Kelola User</span>
+          </button>
+          <button id="addMenuMainBtn" onclick="openCrudModal()" class="hidden whitespace-nowrap px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5">
+            <i class="fas fa-plus text-[10px]"></i><span>+ Menu Utama</span>
+          </button>
+          <button id="authBtn" onclick="handleAuthClick()" class="whitespace-nowrap px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5">
+            <i class="fas fa-key text-[10px]"></i><span id="authBtnLabel">Login System</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="space-y-6">
+        <div id="breadcrumbBar" class="flex items-center space-x-2">
+          <button onclick="loadPage('ROOT')" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <i class="fas fa-house text-[10px]"></i> Beranda Utama
+          </button>
+        </div>
+
+        <div class="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1f2937] p-6 sm:p-8 shadow-xl">
+          <span class="inline-block px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">Selamat Datang di Portal DMS</span>
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 id="bannerTitle" class="text-2xl sm:text-3xl font-extrabold text-white">Direktori Sistem & Tautan</h2>
+            <div class="relative w-full md:w-80">
+              <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-500"></i>
+              <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Cari menu / modul..." class="w-full bg-slate-900 border border-[#1f2937] rounded-xl pl-9 pr-8 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all shadow-inner">
+            </div>
+          </div>
+          <p id="bannerDesc" class="text-slate-400 text-xs sm:text-sm mt-3 max-w-3xl leading-relaxed">Silakan pilih menu di atas atau jelajahi modul di bawah ini.</p>
+        </div>
+
+        <div id="loadingState" class="flex flex-col items-center justify-center py-16 space-y-3">
+          <div class="fast-spinner"></div>
+          <p class="text-xs text-slate-400">Sinkronisasi data...</p>
+        </div>
+
+        <div id="cardsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 hidden"></div>
+      </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
+      <div class="bg-[#111827] border border-[#1f2937] w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b border-[#1f2937] mb-4">
+          <h3 class="text-xs font-bold text-white uppercase">Authentication System</h3>
+          <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <form onsubmit="executeLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Username</label>
+            <input type="text" id="loginUser" required class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Password</label>
+            <input type="password" id="loginPass" required class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg">Login Account</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- CRUD Modal -->
+    <div id="crudModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
+      <div class="bg-[#111827] border border-[#1f2937] w-full max-w-md rounded-2xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b border-[#1f2937] mb-4">
+          <h3 id="crudModalTitle" class="text-xs font-bold text-white uppercase">Form Pengaturan Menu</h3>
+          <button onclick="closeCrudModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <form onsubmit="executeSaveMenu(event)" class="space-y-3">
+          <input type="hidden" id="formId">
+          <input type="hidden" id="formParentId">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Judul Menu / Halaman</label>
+            <input type="text" id="formTitle" required class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Kategori</label>
+            <input type="text" id="formCategory" placeholder="misal: General" class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Akses Privasi</label>
+            <select id="formVisibility" class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white">
+              <option value="UMUM">UMUM (Semua Orang)</option>
+              <option value="PRIVASI">PRIVASI (Hanya Saya)</option>
+              <option value="PRIVASI_ADMIN">PRIVASI & ADMIN</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-300 mb-1">Tipe Aksi</label>
+              <select id="formType" class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white">
+                <option value="link">Tautan Eksternal</option>
+                <option value="folder">Sub Halaman (Folder)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-300 mb-1">Icon FontAwesome</label>
+              <input type="text" id="formIcon" value="fas fa-link" class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Target URL</label>
+            <input type="text" id="formUrl" value="#" class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Deskripsi Singkat</label>
+            <textarea id="formDesc" rows="2" class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white"></textarea>
+          </div>
+          <div class="flex justify-end space-x-2 pt-2">
+            <button type="button" onclick="closeCrudModal()" class="px-4 py-2 bg-slate-800 text-xs text-slate-300 rounded-xl">Batal</button>
+            <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white rounded-xl shadow-lg">Simpan Data</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div id="userManagementModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
+      <div class="bg-[#111827] border border-[#1f2937] w-full max-w-2xl rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center pb-3 border-b border-[#1f2937] mb-4">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-users-gear text-purple-400"></i>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Manajemen User (Admin Only)</h3>
+          </div>
+          <button onclick="closeUserManagementModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="flex justify-between items-center mb-4">
+          <p class="text-[11px] text-slate-400">Kelola pengguna sistem dan hak akses.</p>
+          <button onclick="openUserFormModal()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1">
+            <i class="fas fa-plus text-[10px]"></i><span>Tambah User</span>
+          </button>
+        </div>
+        <div class="overflow-y-auto flex-1 border border-[#1f2937] rounded-xl">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900 border-b border-[#1f2937] text-[10px] uppercase font-bold text-slate-400">
+                <th class="p-3">User ID</th>
+                <th class="p-3">Username</th>
+                <th class="p-3">Nama Lengkap</th>
+                <th class="p-3">Role</th>
+                <th class="p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody" class="divide-y divide-[#1f2937] text-xs"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Form Modal -->
+    <div id="userFormModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[110] hidden flex items-center justify-center p-4">
+      <div class="bg-[#111827] border border-[#1f2937] w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b border-[#1f2937] mb-4">
+          <h3 id="userFormTitle" class="text-xs font-bold text-white uppercase tracking-wider">Tambah User Baru</h3>
+          <button onclick="closeUserFormModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <form onsubmit="executeSaveUser(event)" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">User ID</label>
+            <input type="text" id="userFormId" placeholder="misal: USR-002" required class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Username</label>
+            <input type="text" id="userFormUsername" required class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Password</label>
+            <input type="password" id="userFormPassword" required class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Nama Lengkap</label>
+            <input type="text" id="userFormFullName" required class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Hak Akses / Role</label>
+            <select id="userFormRole" class="w-full bg-slate-900 border border-[#1f2937] rounded-xl px-3 py-2 text-xs text-white">
+              <option value="USER_KHUSUS">USER_KHUSUS</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-2 pt-2">
+            <button type="button" onclick="closeUserFormModal()" class="px-4 py-2 bg-slate-800 text-xs text-slate-300 rounded-xl">Batal</button>
+            <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white rounded-xl shadow-lg">Simpan User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <footer class="mt-8 pt-4 border-t border-[#1f2937] text-center text-[11px] text-slate-500">
+      &copy; 2026 Portal DMS Engine V2 - Integrated Architecture
+    </footer>
+  </div>
+
+  <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbznUsNywp1Jwkkxj-rjrxmEwe_UCkFRu87s2MQy4qcCFWc9E8qvqsfoH7dfdFKwHFJ0/exec";
+    
+    let rootMenus = [];
+    let usersList = [];
+    let currentUser = null;
+    let activePageId = "ROOT";
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedUser = localStorage.getItem('portal_currentUser');
+      if (savedUser) {
+        try { currentUser = JSON.parse(savedUser); } catch (e) { localStorage.removeItem('portal_currentUser'); }
+      }
+      fetchData();
+    });
+
+    function showGlobalSpinner(msg = "Memproses...") {
+      document.getElementById('globalSpinnerMessage').innerText = msg;
+      document.getElementById('globalSpinnerOverlay').classList.remove('hidden');
+    }
+    function hideGlobalSpinner() { document.getElementById('globalSpinnerOverlay').classList.add('hidden'); }
+
+    function syncDataManual() {
+      showGlobalSpinner("Menyinkronkan data...");
+      sessionStorage.clear();
+      fetchData(true).then(() => hideGlobalSpinner());
+    }
+
+    async function fetchData(forceRefresh = false) {
+      const userId = currentUser ? currentUser.userId : "PUBLIC";
+      const role = currentUser ? currentUser.role : "UMUM";
+      const cacheKey = `portal_cache_${userId}_${role}`;
+
+      if (!forceRefresh) {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          rootMenus = JSON.parse(cached);
+          renderHeaderUI();
+          loadPage(activePageId);
+          document.getElementById('loadingState').classList.add('hidden');
+          document.getElementById('cardsGrid').classList.remove('hidden');
+          return;
+        }
+      }
+
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('cardsGrid').classList.add('hidden');
+
+      try {
+        const res = await fetch(`${GAS_API_URL}?action=getMenus&userId=${userId}&role=${role}&_t=${Date.now()}`);
+        const result = await res.json();
+        if (result.status === 'success') {
+          rootMenus = result.data;
+          sessionStorage.setItem(cacheKey, JSON.stringify(rootMenus));
+          renderHeaderUI();
+          loadPage(activePageId);
+        } else {
+          alert("Gagal mengambil data: " + result.message);
+        }
+      } catch (err) {
+        alert("Gagal terhubung ke API backend. Pastikan URL Web App sudah benar.");
+      } finally {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('cardsGrid').classList.remove('hidden');
+      }
+    }
+
+    function renderHeaderUI() {
+      const badge = document.getElementById('roleBadge');
+      const ownerInfo = document.getElementById('userOwnerInfo');
+      const authBtnLabel = document.getElementById('authBtnLabel');
+      const manageBtn = document.getElementById('manageUserBtn');
+      const addMenuBtn = document.getElementById('addMenuMainBtn');
+
+      if (currentUser) {
+        badge.innerText = `ROLE: ${currentUser.role}`;
+        ownerInfo.innerText = `@${currentUser.username} (${currentUser.fullName})`;
+        authBtnLabel.innerText = "Logout System";
+        addMenuBtn.classList.remove('hidden');
+        if (currentUser.role === 'ADMIN') {
+          manageBtn.classList.remove('hidden');
+        } else {
+          manageBtn.classList.add('hidden');
+        }
+      } else {
+        badge.innerText = "ROLE: UMUM";
+        ownerInfo.innerText = "@public_access";
+        authBtnLabel.innerText = "Login System";
+        addMenuBtn.classList.add('hidden');
+        manageBtn.classList.add('hidden');
+      }
+    }
+
+    function loadPage(pageId, pageTitle = "Direktori Sistem & Tautan") {
+      activePageId = pageId;
+      const grid = document.getElementById('cardsGrid');
+      const bannerTitle = document.getElementById('bannerTitle');
+      const breadcrumb = document.getElementById('breadcrumbBar');
+
+      bannerTitle.innerText = pageTitle;
+      
+      let menusToDisplay = rootMenus;
+      if (pageId !== "ROOT") {
+        const foundFolder = findMenuRecursive(rootMenus, pageId);
+        if (foundFolder) {
+          menusToDisplay = foundFolder.submenus || [];
+          breadcrumb.innerHTML = `
+            <button onclick="loadPage('ROOT')" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <i class="fas fa-house text-[10px]"></i> Beranda Utama
+            </button>
+            <i class="fas fa-chevron-right text-[10px] text-slate-500"></i>
+            <span class="px-3 py-1.5 bg-slate-800 text-slate-200 rounded-xl text-xs font-bold">${foundFolder.title}</span>
+          `;
+        }
+      } else {
+        breadcrumb.innerHTML = `
+          <button onclick="loadPage('ROOT')" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <i class="fas fa-house text-[10px]"></i> Beranda Utama
+          </button>
+        `;
+      }
+
+      if (!menusToDisplay || menusToDisplay.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-xs text-slate-500 italic">Belum ada menu atau sub-menu yang tersedia.</div>`;
+        return;
+      }
+
+      renderCards(menusToDisplay);
+    }
+
+    function findMenuRecursive(list, id) {
+      for (let item of list) {
+        if (item.id === id) return item;
+        if (item.submenus && item.submenus.length > 0) {
+          const found = findMenuRecursive(item.submenus, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    function renderCards(items) {
+      const grid = document.getElementById('cardsGrid');
+      grid.innerHTML = items.map(item => {
+        const isFolder = item.type === 'folder';
+        const actionAttr = isFolder ? `onclick="loadPage('${item.id}', '${item.title}')"` : `onclick="window.open('${item.targetUrl}', '_blank')"` ;
+        
+        let adminActionHtml = '';
+        if (currentUser && (currentUser.role === 'ADMIN' || currentUser.userId === item.ownerUserId)) {
+          adminActionHtml = `
+            <div class="flex items-center space-x-1 pt-2 border-t border-[#1f2937] mt-3 justify-end">
+              <button onclick="event.stopPropagation(); openCrudModal('${item.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg text-[10px] font-bold"><i class="fas fa-pen"></i> Edit</button>
+              <button onclick="event.stopPropagation(); executeDeleteMenu('${item.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg text-[10px] font-bold"><i class="fas fa-trash"></i> Hapus</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div ${actionAttr} class="group bg-[#111827] border border-[#1f2937] hover:border-emerald-500/50 rounded-2xl p-5 cursor-pointer transition-all shadow-xl flex flex-col justify-between hover:-translate-y-1">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+                  <i class="${item.iconClass || 'fas fa-link'}"></i>
+                </div>
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 uppercase">${item.category || 'GENERAL'}</span>
+              </div>
+              <h3 class="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">${item.title}</h3>
+              <p class="text-xs text-slate-400 mt-1.5 line-clamp-2">${item.description || 'Tidak ada deskripsi.'}</p>
+            </div>
+            ${adminActionHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleSearch(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) {
+        loadPage(activePageId);
+        return;
+      }
+      const searchRecursive = (list, results = []) => {
+        list.forEach(item => {
+          if (item.title.toLowerCase().includes(q) || (item.description && item.description.toLowerCase().includes(q))) {
+            results.push(item);
+          }
+          if (item.submenus && item.submenus.length > 0) {
+            searchRecursive(item.submenus, results);
+          }
+        });
+        return results;
+      };
+      const foundResults = searchRecursive(rootMenus);
+      renderCards(foundResults);
+    }
+
+    // Modal Control & Auth Handlers
+    function handleAuthClick() {
+      if (currentUser) {
+        if (confirm("Keluar dari sistem?")) {
+          localStorage.removeItem('portal_currentUser');
+          currentUser = null;
+          sessionStorage.clear();
+          fetchData();
+        }
+      } else {
+        document.getElementById('loginModal').classList.remove('hidden');
+      }
+    }
+    function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+
+    async function executeLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('loginUser').value;
+      const p = document.getElementById('loginPass').value;
+      showGlobalSpinner("Autentikasi...");
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'login', username: u, password: p })
+        });
+        const result = await res.json();
+        hideGlobalSpinner();
+        if (result.status === 'success') {
+          currentUser = result.user;
+          localStorage.setItem('portal_currentUser', JSON.stringify(currentUser));
+          sessionStorage.clear();
+          closeLoginModal();
+          fetchData();
+        } else {
+          alert("Login gagal: " + result.message);
+        }
+      } catch (err) {
+        hideGlobalSpinner();
+        alert("Gagal terhubung ke server.");
+      }
+    }
+
+    function openCrudModal(id = null) {
+      document.getElementById('crudModal').classList.remove('hidden');
+      const isSub = activePageId !== "ROOT";
+      document.getElementById('formParentId').value = isSub ? activePageId : "";
+      if (id) {
+        document.getElementById('crudModalTitle').innerText = "Edit Menu";
+        const item = findMenuRecursive(rootMenus, id);
+        if (item) {
+          document.getElementById('formId').value = item.id;
+          document.getElementById('formTitle').value = item.title;
+          document.getElementById('formCategory').value = item.category;
+          document.getElementById('formVisibility').value = item.visibility;
+          document.getElementById('formType').value = item.type;
+          document.getElementById('formIcon').value = item.iconClass;
+          document.getElementById('formUrl').value = item.targetUrl;
+          document.getElementById('formDesc').value = item.description;
+        }
+      } else {
+        document.getElementById('crudModalTitle').innerText = isSub ? "Tambah Sub Menu" : "Tambah Menu Utama";
+        document.getElementById('formId').value = "";
+        document.getElementById('formTitle').value = "";
+        document.getElementById('formCategory').value = "";
+        document.getElementById('formVisibility').value = "UMUM";
+        document.getElementById('formType').value = "link";
+        document.getElementById('formIcon').value = "fas fa-link";
+        document.getElementById('formUrl').value = "#";
+        document.getElementById('formDesc').value = "";
+      }
+    }
+    function closeCrudModal() { document.getElementById('crudModal').classList.add('hidden'); }
+
+    async function executeSaveMenu(e) {
+      e.preventDefault();
+      const payload = {
+        action: 'saveMenu',
+        id: document.getElementById('formId').value,
+        parentId: document.getElementById('formParentId').value,
+        title: document.getElementById('formTitle').value,
+        category: document.getElementById('formCategory').value,
+        visibility: document.getElementById('formVisibility').value,
+        type: document.getElementById('formType').value,
+        iconClass: document.getElementById('formIcon').value,
+        targetUrl: document.getElementById('formUrl').value,
+        description: document.getElementById('formDesc').value,
+        ownerUserId: currentUser ? currentUser.userId : "PUBLIC"
+      };
+      showGlobalSpinner("Menyimpan menu...");
+      try {
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        hideGlobalSpinner();
+        if (result.status === 'success') {
+          closeCrudModal();
+          sessionStorage.clear();
+          fetchData();
+        } else {
+          alert("Gagal menyimpan: " + result.message);
+        }
+      } catch (err) {
+        hideGlobalSpinner();
+        alert("Gagal terhubung.");
+      }
+    }
+
+    async function executeDeleteMenu(id) {
+      if (!confirm("Hapus menu ini secara permanen?")) return;
+      showGlobalSpinner("Menghapus menu...");
+      try {
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMenu', id: id }) });
+        const result = await res.json();
+        hideGlobalSpinner();
+        if (result.status === 'success') {
+          sessionStorage.clear();
+          fetchData();
+        } else {
+          alert("Gagal menghapus: " + result.message);
+        }
+      } catch (err) {
+        hideGlobalSpinner();
+        alert("Gagal terhubung.");
+      }
+    }
+
+    async function openUserManagementModal() {
+      document.getElementById('userManagementModal').classList.remove('hidden');
+      showGlobalSpinner("Memuat data user...");
+      try {
+        const res = await fetch(`${GAS_API_URL}?action=getUsers&_t=${Date.now()}`);
+        const result = await res.json();
+        hideGlobalSpinner();
+        if (result.status === 'success') {
+          usersList = result.data;
+          renderUserTable();
+        } else {
+          alert("Gagal memuat user: " + result.message);
+        }
+      } catch (err) {
+        hideGlobalSpinner();
+        alert("Gagal terhubung.");
+      }
+    }
+    function closeUserManagementModal() { document.getElementById('userManagementModal').classList.add('hidden'); }
+
+    function renderUserTable() {
+      const tbody = document.getElementById('userTableBody');
+      tbody.innerHTML = usersList.map(u => `
+        <tr class="hover:bg-slate-900/50">
+          <td class="p-3 font-bold text-slate-200">${u.userId}</td>
+          <td class="p-3 text-slate-300">@${u.username}</td>
+          <td class="p-3 text-slate-300">${u.fullName}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">${u.role}</span></td>
+          <td class="p-3 text-center space-x-1">
+            <button onclick="editUser('${u.userId}')" class="px-2 py-1 bg-slate-800 text-emerald-400 rounded text-[10px] font-bold"><i class="fas fa-pen"></i></button>
+            <button onclick="deleteUser('${u.userId}')" class="px-2 py-1 bg-slate-800 text-rose-400 rounded text-[10px] font-bold"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openUserFormModal() {
+      document.getElementById('userFormModal').classList.remove('hidden');
+      document.getElementById('userFormTitle').innerText = "Tambah User Baru";
+      document.getElementById('userFormId').value = "USR-" + Date.now().toString().slice(-4);
+      document.getElementById('userFormUsername').value = "";
+      document.getElementById('userFormPassword').value = "";
+      document.getElementById('userFormFullName').value = "";
+      document.getElementById('userFormRole').value = "USER_KHUSUS";
+    }
+    function closeUserFormModal() { document.getElementById('userFormModal').classList.add('hidden'); }
+
+    function editUser(userId) {
+      const u = usersList.find(x => x.userId === userId);
+      if (!u) return;
+      document.getElementById('userFormModal').classList.remove('hidden');
+      document.getElementById('userFormTitle').innerText = "Edit User";
+      document.getElementById('userFormId').value = u.userId;
+      document.getElementById('userFormUsername').value = u.username;
+      document.getElementById('userFormPassword').value = u.password;
+      document.getElementById('userFormFullName').value = u.fullName;
+      document.getElementById('userFormRole').value = u.role;
+    }
+
+    async function executeSaveUser(e) {
+      e.preventDefault();
+      const payload = {
+        action: 'saveUser',
+        userId: document.getElementById('userFormId').value,
+        username: document.getElementById('userFormUsername').value,
+        password: document.getElementById('userFormPassword').value,
+        fullName: document.getElementById('userFormFullName').value,
+        role: document.getElementById('userFormRole').value
+      };
+      showGlobalSpinner("Menyimpan user...");
+      try {
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        hideGlobalSpinner();
+        if (result.status === 'success') {
+          closeUserFormModal();
+          openUserManagementModal();
+        } else {
+          alert("Gagal: " + result.message);
+        }
+      } catch (err) {
+        hideGlobalSpinner();
+        alert("Gagal terhubung.");
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm("Hapus user ini?")) return;
+      showGlobalSpinner("Menghapus user...");
+      try {
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteUser', userId: userId }) });
+        const result = await res.json();
+        hideGlobalSpinner();
+        if (result.status === 'success') {
+          openUserManagementModal();
+        } else {
+          alert("Gagal: " + result.message);
+        }
+      } catch (err) {
+        hideGlobalSpinner();
+        alert("Gagal terhubung.");
+      }
+    }
+  </script>
+</body>
+</html>
